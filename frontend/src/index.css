@@ -1,0 +1,279 @@
+import { useEffect, useState } from 'react';
+
+const API_URL = 'http://localhost:5000/api';
+
+export default function App() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [orderForm, setOrderForm] = useState({
+    name: '',
+    email: '',
+    artworkType: '',
+    size: 'Standard',
+    message: ''
+  });
+  const [commissionForm, setCommissionForm] = useState({
+    name: '',
+    email: '',
+    projectType: '',
+    details: ''
+  });
+  const [orderStatus, setOrderStatus] = useState('');
+  const [commissionStatus, setCommissionStatus] = useState('');
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await fetch(`${API_URL}/products`);
+        const data = await res.json();
+        setProducts(data);
+      } catch (error) {
+        console.error('Failed to load products:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProducts();
+  }, []);
+
+  async function handleOrderSubmit(e) {
+    e.preventDefault();
+
+    try {
+      const res = await fetch(`${API_URL}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderForm)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to place order.');
+      }
+
+      setOrderStatus(data.message);
+      setOrderForm({
+        name: '',
+        email: '',
+        artworkType: '',
+        size: 'Standard',
+        message: ''
+      });
+    } catch (error) {
+      setOrderStatus(error.message);
+    }
+  }
+
+  async function handleCommissionSubmit(e) {
+    e.preventDefault();
+
+    try {
+      const res = await fetch(`${API_URL}/commission`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(commissionForm)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to send commission request.');
+      }
+
+      setCommissionStatus(data.message);
+      setCommissionForm({
+        name: '',
+        email: '',
+        projectType: '',
+        details: ''
+      });
+    } catch (error) {
+      setCommissionStatus(error.message);
+    }
+  }
+
+  return (
+    <div className="app-shell">
+      <header className="topbar">
+        <div className="container nav">
+          <div className="logo">BEARTS</div>
+          <nav className="menu">
+            <a href="#home">Home</a>
+            <a href="#collection">Collection</a>
+            <a href="#commissions">Commissions</a>
+            <a href="#about">About</a>
+            <a href="#contact">Contact</a>
+          </nav>
+          <a href="#contact" className="btn btn-primary">Order Art</a>
+        </div>
+      </header>
+
+      <main id="home">
+        <section className="hero">
+          <div className="container hero-grid">
+            <div className="hero-copy">
+              <span className="badge">Original art studio</span>
+              <h1>Art that makes your space feel alive.</h1>
+              <p>
+                BEARTS creates original paintings, custom commissions, and collectible art for homes,
+                offices, and meaningful gifts.
+              </p>
+              <div className="hero-actions">
+                <a href="#collection" className="btn btn-primary">Shop Collection</a>
+                <a href="#commissions" className="btn btn-secondary">Commission a Piece</a>
+              </div>
+            </div>
+
+            <div className="hero-visual">
+              <div className="art-card">
+                <div className="art-image"></div>
+                <div className="floating-card">
+                  <strong>Featured Piece</strong>
+                  <span>Warm Horizon — $420</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="collection" className="section">
+          <div className="container">
+            <div className="section-head">
+              <h2>Featured works</h2>
+              <a href="#contact" className="btn btn-secondary">View all</a>
+            </div>
+
+            {loading ? (
+              <p>Loading artwork...</p>
+            ) : (
+              <div className="product-grid">
+                {products.map((product) => (
+                  <article key={product.id} className="product-card">
+                    <img src={product.image} alt={product.name} />
+                    <div className="product-info">
+                      <div className="product-row">
+                        <h3>{product.name}</h3>
+                        <span>${product.price}</span>
+                      </div>
+                      <p>{product.category}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section id="commissions" className="section">
+          <div className="container commission-box">
+            <div>
+              <span className="badge">Custom art</span>
+              <h2>Commission a piece made just for you</h2>
+              <p>
+                Whether you want a portrait, abstract work, or art for a special room, we create custom
+                pieces tailored to your story, space, and style.
+              </p>
+            </div>
+
+            <form className="order-form" onSubmit={handleCommissionSubmit}>
+              <input
+                type="text"
+                placeholder="Your name"
+                value={commissionForm.name}
+                onChange={(e) => setCommissionForm({ ...commissionForm, name: e.target.value })}
+              />
+              <input
+                type="email"
+                placeholder="Email address"
+                value={commissionForm.email}
+                onChange={(e) => setCommissionForm({ ...commissionForm, email: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Project type"
+                value={commissionForm.projectType}
+                onChange={(e) => setCommissionForm({ ...commissionForm, projectType: e.target.value })}
+              />
+              <textarea
+                rows="4"
+                placeholder="Tell us about your vision..."
+                value={commissionForm.details}
+                onChange={(e) => setCommissionForm({ ...commissionForm, details: e.target.value })}
+              />
+              <button type="submit" className="btn btn-primary">Request a quote</button>
+              {commissionStatus && <p className="status-message">{commissionStatus}</p>}
+            </form>
+          </div>
+        </section>
+
+        <section id="about" className="section">
+          <div className="container about">
+            <div className="about-card">
+              <h2>About BEARTS</h2>
+              <p>
+                BEARTS is an art studio focused on emotion, texture, and story-driven design. Each
+                piece is created with intention — whether it is a collectible original or a custom work
+                made for a meaningful place in someone’s life.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="contact" className="section">
+          <div className="container contact-box">
+            <div className="contact-copy">
+              <span className="badge">Order / Contact</span>
+              <h2>Get your custom art project started</h2>
+            </div>
+
+            <form className="order-form" onSubmit={handleOrderSubmit}>
+              <input
+                type="text"
+                placeholder="Your name"
+                value={orderForm.name}
+                onChange={(e) => setOrderForm({ ...orderForm, name: e.target.value })}
+              />
+              <input
+                type="email"
+                placeholder="Email address"
+                value={orderForm.email}
+                onChange={(e) => setOrderForm({ ...orderForm, email: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Artwork type"
+                value={orderForm.artworkType}
+                onChange={(e) => setOrderForm({ ...orderForm, artworkType: e.target.value })}
+              />
+              <select
+                value={orderForm.size}
+                onChange={(e) => setOrderForm({ ...orderForm, size: e.target.value })}
+              >
+                <option>Standard</option>
+                <option>Small</option>
+                <option>Medium</option>
+                <option>Large</option>
+              </select>
+              <textarea
+                rows="4"
+                placeholder="Add notes for your order..."
+                value={orderForm.message}
+                onChange={(e) => setOrderForm({ ...orderForm, message: e.target.value })}
+              />
+              <button type="submit" className="btn btn-primary">Place Order</button>
+              {orderStatus && <p className="status-message">{orderStatus}</p>}
+            </form>
+          </div>
+        </section>
+      </main>
+
+      <footer className="footer">
+        <div className="container">
+          <p>© 2026 BEARTS — Original art and custom commissions</p>
+        </div>
+      </footer>
+    </div>
+  );
+}
